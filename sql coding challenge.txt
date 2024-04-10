@@ -1,0 +1,325 @@
+use CarRentalSystem;
+
+show tables;
+
+describe payment;
+
+insert into vehicle(make,model,year,dailyRate,available,passangerCapacity,engineCapacity)
+values
+('toyota','camry',2022,50.00,1,4,1450),
+('Honda','civic',2023,45.00,1,7,1500),
+('ford','focus',2022,48.00,0,4,1400),
+('nissan','altima',2023,52.00,1,7,1200),
+('chevrolet','malibu',2022,47.00,1,4,1800),
+('hyundai','sonata',2023,49.00,0,7,1400),
+('bmw','3-series',2023,60.00,1,7,2499);
+
+select * from vehicle;
+
+insert into vehicle(make,model,year,dailyRate,available,passangerCapacity,engineCapacity)
+values
+('mercedes','c-class',2022,58.00,1,8,2599),
+('audi','a4',2023,55.00,0,4,2500),
+('Lexus','es','2023',54.00,1,4,2500);
+
+insert into customer(firstname,lastname,email,phonenumber)
+values
+('john','doe','johndoe@example.com','55555555');
+
+insert into customer(firstname,lastname,email,phonenumber)
+values
+('jane','smith','janesmith@example.com','55512467'),
+( 'Robert', 'Johnson', 'robert@example.com', 555-789-1234),
+ ('Sarah', 'Brown', 'sarah@example.com', 555-456-7890),
+ ('David', 'Lee', 'david@example.com', 555-987-6543),
+ ('Laura', 'Hall', 'laura@example.com', 555-234-5678),
+ ('Michael', 'Davis', 'michael@example.com', 555-876-5432),
+ ('Emma', 'Wilson', 'emma@example.com', 555-432-1098),
+ ('William', 'Taylor', 'william@example.com', 555-321-6547),
+ ('Olivia', 'Adams', 'olivia@example.com', 555-765-4321);
+ 
+ insert into lease(vehicleid,customerid,startdate,enddate,leasetype)
+ values
+ (1,1,'2023-01-01','2023-01-05', 'Daily'),
+ (2,2,'2023-02-15','2023-02-28', 'Monthly'),
+ (3,3,'2023-03-10','2023-03-15', 'Daily'),
+ (4,4,'2023-04-20','2023-04-30', 'Monthly'),
+ (5,5,'2023-05-05','2023-05-10', 'Daily'),
+ (4,3,'2023-06-15','2023-06-30', 'Monthly'),
+ (7,7,'2023-07-01','2023-07-10', 'Daily'),
+ (8,8,'2023-08-12','2023-08-15', 'Monthly'),
+ (3,3,'2023-09-07','2023-09-10','Daily'),
+ (10,10,'2023-10-10','2023-10-31', 'Monthly');
+ 
+ insert into payment(leaseid,paymentdate,amount)
+ values
+ (1, '2023-01-03', 200.00),
+ (2, '2023-02-20', 1000.00),
+(3, '2023-03-12', 75.00);
+
+
+
+
+-- 1. Update the daily rate for a Mercedes car to 68.
+
+update vehicle
+SET dailyrate = 68
+where  make = 'mercedes';
+
+
+-- 2. Delete a specific customer and all associated leases and payments.
+delete 
+from payment
+where leaseid= 1;
+
+delete 
+from lease 
+where customerid = 1;
+
+delete
+from customer
+where customerid=1;
+
+-- 3. Rename the "paymentDate" column in the Payment table to "transactionDate"
+
+alter table payment
+rename column paymentdate to transactiondate;
+
+-- 4. Find a specific customer by email.
+
+select *
+from customer
+where email ='sarah@example.com';
+
+/*
++------------+-----------+----------+-------------------+-------------+
+| customerId | firstname | lastname | email             | phoneNumber |
++------------+-----------+----------+-------------------+-------------+
+|          4 | Sarah     | Brown    | sarah@example.com |       -7791 |
++------------+-----------+----------+-------------------+-------------+
+*/
+
+
+-- 5. Get active leases for a specific customer.
+
+select c.firstname,c.lastname, l.startdate,l.enddate
+from customer c join lease l
+ON c.customerid = l.customerid
+where c.customerid = 3 AND enddate >= startdate;
+
+/*
++-----------+----------+------------+------------+
+| firstname | lastname | startdate  | enddate    |
++-----------+----------+------------+------------+
+| Robert    | Johnson  | 2023-03-10 | 2023-03-15 |
+| Robert    | Johnson  | 2023-06-15 | 2023-06-30 |
+| Robert    | Johnson  | 2023-09-07 | 2023-09-10 |
++-----------+----------+------------+------------+
+*/
+
+
+-- 6. Find all payments made by a customer with a specific phone number
+
+select p.paymentid,p.transactiondate,p.amount
+from customer c join lease l
+ON c.customerid = l.customerid
+JOIN payment p
+ON l.leaseid = p.leaseid
+where phonenumber = '55512467';
+
+/*
++-----------+-----------------+--------+
+| paymentid | transactiondate | amount |
++-----------+-----------------+--------+
+|         2 | 2023-02-20      |   1000 |
++-----------+-----------------+--------+
+*/
+
+-- 7. Calculate the average daily rate of all available cars.
+
+select avg(dailyrate)
+from vehicle
+where available = 1;
+
+/*
++--------------------+
+| avg(dailyrate)     |
++--------------------+
+| 53.714285714285715 |
++--------------------+
+*/
+
+-- 8. Find the car with the highest daily rate.
+
+select *
+from vehicle
+order by dailyrate desc
+limit 1;
+
+/*
++-----------+----------+---------+------+-----------+-----------+-------------------+----------------+
+| vahicleid | make     | model   | year | dailyRate | available | passangerCapacity | engineCapacity |
++-----------+----------+---------+------+-----------+-----------+-------------------+----------------+
+|         8 | mercedes | c-class | 2022 |        68 |         1 |                 8 |           2599 |
++-----------+----------+---------+------+-----------+-----------+-------------------+----------------+
+*/
+
+-- 9. Retrieve all cars leased by a specific customer
+/*
+projection : vehicle
+criteria : customer
+*/
+
+select c.customerid, v.vahicleid,v.make,v.model
+from vehicle v JOIN lease l
+ON v.vahicleid = l.vehicleid
+join customer c ON l.customerid = c.customerid
+where c.customerid = 3;
+
+/*
++------------+-----------+--------+--------+
+| customerid | vahicleid | make   | model  |
++------------+-----------+--------+--------+
+|          3 |         3 | ford   | focus  |
+|          3 |         4 | nissan | altima |
+|          3 |         3 | ford   | focus  |
++------------+-----------+--------+--------+
+*/
+
+-- 10. Find the details of the most recent lease
+
+select c.firstname, v.make, v.model,l.*
+from vehicle v join lease l
+ON v.vahicleid = l.vehicleid
+JOIN customer c 
+ON l.customerid = c.customerid
+order by startdate desc
+limit 1;
+
+/*
++-----------+-------+-------+---------+-----------+------------+------------+------------+-----------+
+| firstname | make  | model | leaseId | vehicleid | customerId | startDate  | endDate    | leaseType |
++-----------+-------+-------+---------+-----------+------------+------------+------------+-----------+
+| Olivia    | Lexus | es    |      10 |        10 |         10 | 2023-10-10 | 2023-10-31 | Monthly   |
++-----------+-------+-------+---------+-----------+------------+------------+------------+-----------+
+*/
+
+-- 11. List all payments made in the year 2023.
+
+select *
+from payment
+where transactiondate LIKE '2023%' ;
+
+/*
++-----------+---------+-----------------+--------+
+| paymentid | leaseId | transactiondate | amount |
++-----------+---------+-----------------+--------+
+|         2 |       2 | 2023-02-20      |   1000 |
+|         3 |       3 | 2023-03-12      |     75 |
++-----------+---------+-----------------+--------+
+*/
+
+--  alternate way 11 
+
+select *
+from payment
+where year(transactiondate) = 2023 ;
+
+/*
++-----------+---------+-----------------+--------+
+| paymentid | leaseId | transactiondate | amount |
++-----------+---------+-----------------+--------+
+|         2 |       2 | 2023-02-20      |   1000 |
+|         3 |       3 | 2023-03-12      |     75 |
++-----------+---------+-----------------+--------+
+
+*/
+
+
+-- 12. Retrieve customers who have not made any payments
+
+select c.customerid,c.firstname,c.lastname
+from customer c LEFT JOIN lease l
+ON c.customerid = l.customerid
+LEFT JOIN payment p
+ON l.leaseid = p.leaseid
+where paymentid is null
+group by c.customerid;
+
+/*
++------------+-----------+----------+
+| customerid | firstname | lastname |
++------------+-----------+----------+
+|          3 | Robert    | Johnson  |
+|          4 | Sarah     | Brown    |
+|          5 | David     | Lee      |
+|          6 | Laura     | Hall     |
+|          7 | Michael   | Davis    |
+|          8 | Emma      | Wilson   |
+|          9 | William   | Taylor   |
+|         10 | Olivia    | Adams    |
++------------+-----------+----------+
+*/
+
+-- 13. Retrieve Car Details and Their Total Payments
+
+select v.make,v.model,sum(p.amount) as total_payments
+from vehicle v JOIN lease l
+ON v.vahicleid = l.vehicleid
+JOIN payment p ON l.leaseid = p.leaseid
+group by v.vahicleid;
+
+/*
++-------+-------+----------------+
+| make  | model | total_payments |
++-------+-------+----------------+
+| Honda | civic |           1000 |
+| ford  | focus |             75 |
++-------+-------+----------------+
+*/
+
+-- 14. Calculate Total Payments for Each Customer
+
+select c.customerid, c.firstname, sum(p.amount) as total_payment
+from customer c join lease l
+ON c.customerid = l.customerid
+join payment p ON l.leaseid = p.leaseid
+group by c.customerid;
+
+/*
+2	jane	1000
+3	Robert	75
+*/
+
+-- 15. List Car Details for Each Lease.
+
+select l.leaseid,v.make,v.model,c.firstname,c.lastname
+from vehicle v JOIN lease l
+ON v.vahicleid = l.leaseid
+join customer c ON l.customerid = c.customerid;
+
+/*
+2	Honda	civic	jane	smith
+3	ford	focus	Robert	Johnson
+6	hyundai	sonata	Robert	Johnson
+9	audi	a4	Robert	Johnson
+4	nissan	altima	Sarah	Brown
+5	chevrolet	malibu	David	Lee
+7	bmw	3-series	Michael	Davis
+8	mercedes	c-class	Emma	Wilson
+10	Lexus	es	Olivia	Adams
+*/
+
+-- 17. Find the Customer Who Has Spent the Most on Leases.
+
+SELECT c.customerID, c.firstName, c.lastName, SUM(p.amount) AS totalSpent
+FROM Customer c
+JOIN Lease l ON c.customerID = l.customerID
+JOIN Payment p ON l.leaseID = p.leaseID
+GROUP BY c.customerID
+ORDER BY totalSpent DESC
+LIMIT 1;
+
+/*
+2	jane	smith	1000
+*/
